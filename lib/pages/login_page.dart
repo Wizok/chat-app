@@ -1,9 +1,13 @@
-import 'package:chat_app/widgets/boton_azul.dart';
+import 'package:chat_app/helpers/mostrar_alerta.dart';
 import 'package:flutter/material.dart';
+
+import 'package:provider/provider.dart';
+import 'package:chat_app/services/auth_services.dart';
 
 import 'package:chat_app/widgets/custom_input.dart';
 import 'package:chat_app/widgets/logo.dart';
 import 'package:chat_app/widgets/labels.dart';
+import 'package:chat_app/widgets/boton_azul.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -52,6 +56,8 @@ class __FormState extends State<_Form> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+
     return Container(
       margin: EdgeInsets.only(top: 40),
       padding: EdgeInsets.symmetric(horizontal: 50),
@@ -71,10 +77,22 @@ class __FormState extends State<_Form> {
           ),
           BotonAzul(
             text: 'Ingresar',
-            onPressed: () {
-              print(emailCtrl.text);
-              print(passlCtrl.text);
-            },
+            onPressed: authService.autenticando
+                ? null
+                : () async {
+                    // Desaparecer el reclado cuando intenemos el Login
+                    FocusScope.of(context).unfocus();
+                    // Trim evita que el usuario mande espacios en blanco
+                    final loginOk = await authService.login(
+                        emailCtrl.text.trim(), passlCtrl.text.trim());
+
+                    if (loginOk) {
+                      // TODO: Navegar a otra pantalla
+                    } else {
+                      mostrarAlerta(context, 'Login incorrecto',
+                          'Revisar sus credenciales nuevamente');
+                    }
+                  },
           ),
         ],
       ),
