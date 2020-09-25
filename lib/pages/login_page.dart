@@ -87,7 +87,9 @@ class __FormState extends State<_Form> {
                         emailCtrl.text.trim(), passlCtrl.text.trim());
 
                     if (loginOk) {
-                      // TODO: Navegar a otra pantalla
+                      // TODO: Conectar a nuestro socket server
+
+                      Navigator.pushReplacementNamed(context, 'usuarios');
                     } else {
                       mostrarAlerta(context, 'Login incorrecto',
                           'Revisar sus credenciales nuevamente');
