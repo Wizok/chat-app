@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
+import 'package:chat_app/services/usuarios_service.dart';
 import 'package:chat_app/services/auth_services.dart';
+import 'package:chat_app/services/socket_service.dart';
+import 'package:chat_app/services/chat_service.dart';
 
 import 'package:chat_app/models/usuarios.dart';
 
@@ -12,20 +16,33 @@ class UsuariosPage extends StatefulWidget {
 }
 
 class _UsuariosPageState extends State<UsuariosPage> {
+// Crear el objeto y Llamar al metodo de getUsuarios()
+  final usuariosService = UsuariosService();
+
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
 
-  final usuarios = [
-    Usuario(uid: '1', nombre: 'María', email: 'test1@test.com', online: true),
-    Usuario(
-        uid: '2', nombre: 'Melissa', email: 'test1@test.com', online: false),
-    Usuario(
-        uid: '3', nombre: 'Fernando', email: 'test1@test.com', online: true),
-  ];
+  List<Usuario> usuarios = [];
+
+  // final usuarios = [
+  //   Usuario(uid: '1', nombre: 'María', email: 'test1@test.com', online: true),
+  //   Usuario(
+  //       uid: '2', nombre: 'Melissa', email: 'test1@test.com', online: false),
+  //   Usuario(
+  //       uid: '3', nombre: 'Fernando', email: 'test1@test.com', online: true),
+  // ];
+
+  @override
+  void initState() {
+    this._cargarUsuarios();
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final socketService = Provider.of<SocketService>(context);
     final usuario = authService.usuario;
 
     return Scaffold(
@@ -39,6 +56,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
               color: Colors.black87,
             ),
             onPressed: () {
+              socketService.disconnect();
               // Mandar llamar el metodo estatico sin necesidad del Provider
               Navigator.pushReplacementNamed(context, 'login');
               AuthService.deleteToken();
@@ -47,7 +65,9 @@ class _UsuariosPageState extends State<UsuariosPage> {
           actions: <Widget>[
             Container(
               margin: EdgeInsets.only(right: 10),
-              child: Icon(Icons.check_circle, color: Colors.blue[400]),
+              child: (socketService.serverStatus == ServerStatus.Online)
+                  ? Icon(Icons.check_circle, color: Colors.blue[400])
+                  : Icon(Icons.offline_bolt, color: Colors.red[400]),
             ),
           ],
         ),
@@ -86,12 +106,25 @@ class _UsuariosPageState extends State<UsuariosPage> {
             color: usuario.online ? Colors.green[300] : Colors.red,
             borderRadius: BorderRadius.circular(100)),
       ),
+      onTap: () {
+        final chatService = Provider.of<ChatService>(context, listen: false);
+        // Se asigna el usuario al que le estamos dando click
+        chatService.usuarioPara = usuario;
+        Navigator.pushNamed(context, 'chat');
+      },
     );
   }
 
   _cargarUsuarios() async {
     // monitor network fetch
-    await Future.delayed(Duration(milliseconds: 1000));
+    // await Future.delayed(Duration(milliseconds: 1000));
+
+    // Crear el objeto y Llamar al metodo de getUsuarios()
+    this.usuarios = await usuariosService.getUsuarios();
+
+    // Actualizar el estado del widget
+    setState(() {});
+
     // if failed,use refreshFailed()
     _refreshController.refreshCompleted();
   }
